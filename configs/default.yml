@@ -1,0 +1,30 @@
+timestep_respacing: 200
+skip_timesteps: 100
+
+lp_custom: 1.0
+lp_custom_value: 0.15
+lpips_sim_lambda: 0
+l2_sim_lambda: 0
+range_lambda: 0
+
+deg_cone_projection: 0
+
+clip_guidance_lambda: 0
+classifier_lambda: 0.1
+
+num_imgs: 6
+batch_size: 6
+
+gpu: 0
+
+seed: 1
+
+classifier_type: 3
+second_classifier_type: -1
+third_classifier_type: -1
+
+use_blended: false
+
+method: 'dvces'
+
+

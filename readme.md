@@ -19,7 +19,7 @@ Before we can start with the generation, we have to setup the project and instal
 * Set variable *data_folder* variable to the folder that contains imagenet dataset
   For example, if your imagenet folder is located under '/scratch/datasets/imagenet', the use `data_folder='/scratch/datasets'`
 
-* Create a new conda env via `conda env create -f python_38_svces_lite.yml`
+* Create a new conda env via `conda env create -f python_38_dvces.yml`
 * Activate the conda environment via `conda activate python_38_dvces`
 * Install additionally robustbench via `pip install git+https://github.com/RobustBench/robustbench.git`
 

@@ -4,6 +4,7 @@ from torchvision.utils import save_image
 
 from blended_diffusion.optimization import DiffusionAttack
 from blended_diffusion.optimization.arguments import get_arguments
+from configs import get_config
 from utils_svces.datasets.paths import get_imagenet_path
 from utils_svces.datasets.imagenet import get_imagenet_labels
 import utils_svces.datasets as dl
@@ -24,7 +25,7 @@ from utils_svces.train_types.helpers import create_attack_config, get_adversaria
 from utils_svces.Evaluator import Evaluator
 
 
-hps = get_arguments()
+hps = get_config(get_arguments())
 
 if not hps.verbose:
     blockPrint()
@@ -66,9 +67,12 @@ in_dataset = in_loader.dataset
 accepted_wnids = []
 
 some_vces = {
-    5358: [108, 109],
-    24894: [668, 832],
-    46894: [938, 936]}
+    13584: [272, 269],
+    10452: [207, 208],
+    46751: [924, 959],
+    36200: [628, 510],
+    48539: [970, 980],
+    48282: [963, 965]}
 
 
 def _plot_counterfactuals(dir, original_imgs, orig_labels, segmentations, targets,
@@ -84,14 +88,31 @@ def _plot_counterfactuals(dir, original_imgs, orig_labels, segmentations, target
 
     pathlib.Path(dir+'/single_images').mkdir(parents=True, exist_ok=True)
 
-    for lin_idx in trange(len(img_idcs), desc=f'Image write'):
+    # Two VCEs per starting image - we fix them to 2
+    num_VCEs_per_image = 2
+    for lin_idx in trange(int(len(img_idcs)/num_VCEs_per_image), desc=f'Image write'):
+
+        # we fix only one radius
+        radius_idx = 0
+        lin_idx *= num_VCEs_per_image
+
         img_idx = img_idcs[lin_idx]
-        num_rows = 2
-        num_cols = num_radii + 1
+
+
+
+
+        in_probabilities = original_probabilities[img_idx, target_idx, radius_idx]
+
+
+        pred_original = in_probabilities.argmax()
+        pred_value = in_probabilities.max()
+
+        num_rows = 1
+        num_cols = num_VCEs_per_image + 1
         fig, ax = plt.subplots(num_rows, num_cols,
                                figsize=(scale_factor * num_cols, num_rows * 1.3 * scale_factor))
         img_label = orig_labels[img_idx]
-        title = f'GT: {class_labels[img_label]}'
+        title = f'GT: {class_labels[img_label]}' #, predicted: {class_labels[pred_original]},{pred_value:.2f}'
 
         img_segmentation = segmentations[img_idx]
         bin_segmentation = torch.sum(img_segmentation, dim=0) > 0.0
@@ -100,46 +121,31 @@ def _plot_counterfactuals(dir, original_imgs, orig_labels, segmentations, target
         mask_color[1, :, :] = 1.0
 
         # plot original:
-        ax[0, 0].axis('off')
-        ax[0, 0].set_title(title)
+        ax[0].axis('off')
+        ax[0].set_title(title)
         img_original = original_imgs[img_idx, :].permute(1, 2, 0).cpu().detach()
-        ax[0, 0].imshow(img_original, interpolation='lanczos')
+        ax[0].imshow(img_original, interpolation='lanczos')
 
-        # plot original with mask
-        ax[1, 0].axis('off')
-        ax[1, 0].set_title('Difference')
+        save_image(original_imgs[img_idx, :].clip(0, 1),
+                   os.path.join(dir, 'single_images', f'{img_idx}_original.png'))
+        for i in range(num_VCEs_per_image):
 
-        for radius_idx in range(len(radii)):
-            img = torch.clamp(perturbed_imgs[img_idx, target_idx, radius_idx].permute(1, 2, 0), min=0.0,
+            img = torch.clamp(perturbed_imgs[img_idx+i, target_idx, radius_idx].permute(1, 2, 0), min=0.0,
                               max=1.0)
-            img_target = targets[img_idx]
-            img_probabilities = perturbed_probabilities[img_idx, target_idx, radius_idx]
-            in_probabilities = original_probabilities[img_idx, target_idx, radius_idx]
+            img_probabilities = perturbed_probabilities[img_idx+i, target_idx, radius_idx]
+
+            img_target = targets[img_idx+i]
+            target_original = in_probabilities[img_target]
 
             target_conf = img_probabilities[img_target]
-            target_original = in_probabilities[img_target]
-            pred_original = in_probabilities.argmax()
-            pred_value = in_probabilities.max()
 
-            ax[target_idx, radius_idx + 1].axis('off')
-            ax[target_idx, radius_idx + 1].imshow(img, interpolation='lanczos')
+            ax[i+1].axis('off')
+            ax[i+1].imshow(img, interpolation='lanczos')
 
-            title = f'{class_labels[img_target]}: {target_conf:.2f}, i:{target_original:.2f},\n p:{class_labels[pred_original]},{pred_value:.2f}'
-            ax[target_idx, radius_idx + 1].set_title(title)
-            ax[target_idx + 1, radius_idx + 1].axis('off')
+            title = f'{class_labels[img_target]}: {target_conf:.2f}, i:{target_original:.2f}'
+            ax[i+1].set_title(title)
 
-            diff = (img_original.cpu() - img.cpu()).sum(2)
-            min_diff_pixels = diff.min()
-            max_diff_pixels = diff.max()
-            min_diff_pixels = -max(abs(min_diff_pixels), max_diff_pixels)
-            max_diff_pixels = -min_diff_pixels
-            diff_scaled = (diff - min_diff_pixels) / (max_diff_pixels - min_diff_pixels)
-            cm = plt.get_cmap('seismic')
-            colored_image = cm(diff_scaled.numpy())
 
-            ax[target_idx + 1, radius_idx + 1].imshow(colored_image, interpolation='lanczos')
-            title=''
-            ax[target_idx + 1, radius_idx + 1].set_title(title)
             save_image(perturbed_imgs[img_idx, target_idx, radius_idx].clip(0, 1), os.path.join(dir, 'single_images', f'{img_idx}.png'))
 
         plt.tight_layout()
@@ -178,14 +184,13 @@ for i, (img_idx, target_classes) in enumerate(selected_vces):
         pass
     else:
         in_image, label = in_dataset[img_idx]
-        for i in range(2):
+        for i in range(len(target_classes)):
             targets_tensor[image_idx+i] = target_classes[i]
             labels_tensor[image_idx+i] = label
             imgs[image_idx+i] = in_image
-        image_idx += 2
+        image_idx += len(target_classes)
         if image_idx >= num_imgs:
             break
-
 
 imgs = imgs[:image_idx]
 segmentations = segmentations[:image_idx]

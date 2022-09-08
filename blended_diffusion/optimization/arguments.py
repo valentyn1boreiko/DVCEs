@@ -42,7 +42,7 @@ def get_arguments(parser=None) -> argparse.Namespace:
         "--skip_timesteps",
         type=int,
         help="How many steps to skip during the diffusion.",
-        default=25,
+        default=-1,
     )
     parser.add_argument(
         "--local_clip_guided_diffusion",
@@ -54,9 +54,9 @@ def get_arguments(parser=None) -> argparse.Namespace:
     # For more details read guided-diffusion/guided_diffusion/respace.py
     parser.add_argument(
         "--timestep_respacing",
-        type=str,
+        type=int,
         help="How to respace the intervals of the diffusion process (number between 1 and 1000).",
-        default="100",
+        default=-1,
     )
     parser.add_argument(
         "--model_output_size",
@@ -74,22 +74,22 @@ def get_arguments(parser=None) -> argparse.Namespace:
         "--clip_guidance_lambda",
         type=float,
         help="Controls how much the image should look like the prompt",
-        default=1000,
+        default=-1
     )
     parser.add_argument(
         "--range_lambda",
         type=float,
         help="Controls how far out of range RGB values are allowed to be",
-        default=50,
+        default=-1
     )
     parser.add_argument(
         "--lpips_sim_lambda",
         type=float,
         help="The LPIPS similarity to the input image",
-        default=1000,
+        default=-1
     )
     parser.add_argument(
-        "--l2_sim_lambda", type=float, help="The L2 similarity to the input image", default=10000,
+        "--l2_sim_lambda", type=float, help="The L2 similarity to the input image", default=-1
     )
 
     parser.add_argument(
@@ -99,13 +99,13 @@ def get_arguments(parser=None) -> argparse.Namespace:
         "--TV_lambda", type=float, help="The TV similarity to the input image", default=0,
     )
     parser.add_argument(
-        "--lp_custom", type=float, help="The custom lp norm", default=0,
+        "--lp_custom", type=float, help="The custom lp norm", default=-1,
     )
     parser.add_argument(
         "--ilvr_multi", type=float, help="The ilvr multiplier", default=0,
     )
     parser.add_argument(
-        "--lp_custom_value", type=float, help="The value of the custom lp norm", default=0,
+        "--lp_custom_value", type=float, help="The value of the custom lp norm", default=-1,
     )
 
 
@@ -160,7 +160,7 @@ def get_arguments(parser=None) -> argparse.Namespace:
     )
 
     # Misc
-    parser.add_argument("--seed", type=int, help="The random seed", default=1)
+    parser.add_argument("--seed", type=int, help="The random seed", default=-1)
     parser.add_argument("--gpu_id", type=int, help="The GPU ID", default=0)
     parser.add_argument("--output_path", type=str, default="output")
     parser.add_argument(
@@ -175,7 +175,7 @@ def get_arguments(parser=None) -> argparse.Namespace:
         "--batch_size",
         type=int,
         help="The number number if images to sample each diffusion process",
-        default=128#4,
+        default=-1,
     )
     parser.add_argument(
         "--vid",
@@ -190,11 +190,11 @@ def get_arguments(parser=None) -> argparse.Namespace:
         dest="export_assets",
     )
 
-    parser.add_argument('--gpu', '--list', nargs='+', default=[0],
+    parser.add_argument('--gpu', '--list', nargs='+', default=[-1],
                         help='GPU indices, if more than 1 parallel modules will be called')
 
     parser.add_argument(
-        "--classifier_lambda", type=float, help="The coefficient used for the classifier", default=0,
+        "--classifier_lambda", type=float, help="The coefficient used for the classifier", default=-1,
     )
 
     parser.add_argument(
@@ -222,7 +222,7 @@ def get_arguments(parser=None) -> argparse.Namespace:
         target_class=-1,
         dataset='imagenet',
         data_folder='',
-        config='imagenet1000.yml',
+        config='default.yml',
         project_folder='.',
         consistent=False,
         step_lr=-1,
@@ -242,10 +242,10 @@ def get_arguments(parser=None) -> argparse.Namespace:
         range_t=0,
         down_N=32,
         eps_project=30,
-        classifier_type=6,
+        classifier_type=-1,
         second_classifier_type=-1,
         third_classifier_type=-1,
-        deg_cone_projection=45,
+        deg_cone_projection=-1,
         interpolation_int_1=3,
         interpolation_int_2=3,
         interpolation_int_3=3,
