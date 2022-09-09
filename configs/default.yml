@@ -13,7 +13,7 @@ deg_cone_projection: 0
 clip_guidance_lambda: 0
 classifier_lambda: 0.1
 
-num_imgs: 6
+num_imgs: 12
 batch_size: 6
 
 seed: 1
@@ -28,6 +28,8 @@ method: 'dvces'
 gen_type: 'p_sample'
 
 model_output_size: 256
+
+enforce_same_norms: true
 
 
 

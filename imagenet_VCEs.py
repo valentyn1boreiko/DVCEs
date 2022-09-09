@@ -67,12 +67,13 @@ in_dataset = in_loader.dataset
 accepted_wnids = []
 
 some_vces = {
-    13584: [272, 269],
+    14655: [288, 292],
     10452: [207, 208],
     46751: [924, 959],
-    36200: [628, 510],
+    48679: [970, 972],
     48539: [970, 980],
-    48282: [963, 965]}
+    48282: [963, 965]
+}
 
 
 def _plot_counterfactuals(dir, original_imgs, orig_labels, segmentations, targets,
@@ -150,11 +151,11 @@ def _plot_counterfactuals(dir, original_imgs, orig_labels, segmentations, target
 
         plt.tight_layout()
         if filenames is not None:
-            fig.savefig(os.path.join(dir, f'{filenames[img_idx]}.png'))
-            fig.savefig(os.path.join(dir, f'{filenames[img_idx]}.pdf'))
+            fig.savefig(os.path.join(dir, f'{filenames[lin_idx]}.png'))
+            fig.savefig(os.path.join(dir, f'{filenames[lin_idx]}.pdf'))
         else:
-            fig.savefig(os.path.join(dir, f'{img_idx}.png'))
-            fig.savefig(os.path.join(dir, f'{img_idx}.pdf'))
+            fig.savefig(os.path.join(dir, f'{lin_idx}.png'))
+            fig.savefig(os.path.join(dir, f'{lin_idx}.pdf'))
 
         plt.close(fig)
 

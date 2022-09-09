@@ -2,6 +2,24 @@
 
 Welcome to the codebase for our NeurIPS submission *Diffusion Visual Counterfactual Explanations.* We will show you how to generate DVCEs on the selected (and you can choose the targets yourselves) ImageNet images with the multiple norm robust model Madry + FT and two SOTA non-robust models Swin-T and ConvNeXt. 
 
+## Examples of DVCEs for the ConvNeXt classifier
+
+<p align="center">
+  <img src="images_examples/0.png" />
+</p>
+<p align="center">
+  <img src="images_examples/2.png" />
+</p>
+<p align="center">
+  <img src="images_examples/4.png" />
+</p>
+<p align="center">
+  <img src="images_examples/8.png" />
+</p>
+<p align="center">
+  <img src="images_examples/10.png" />
+</p>
+
 ## Setup
 
 Before we can start with the generation, we have to setup the project and install required packages.
@@ -36,9 +54,9 @@ For any of the proposed parameter settings, feel free to adjust the values, but 
   `for seed in "${seeds[@]}"; do for coeff_class in "${cl_coeffs[@]}"; do for skip in "${skips[@]}"; do for second_classifier_t in "${second_classifier_ts[@]}"; do for reg in "${regs[@]}"; do python imagenet_VCEs.py --seed $seed --gen_type 'p_sample' --classifier_type $classifier_t --second_classifier_type $second_classifier_t --enforce_same_norms --background_preservation_loss --gpu $gpu --batch_size $bs --num_imgs $nim --classifier_lambda $coeff_class  --clip_guidance_lambda 0 --lp_custom $lp --lp_custom_value $reg --range_lambda 0 --lpips_sim_lambda 0 --l2_sim_lambda 0 --timestep_respacing $steps --skip_timesteps $skip --method 'dvces' --data_folder $data_folder > logs/log; done; done; done; done; done;`  
 
 * Generating DVCEs with the cone projection for Madry + FT and respectively Swin-T (model id is 30) and ConvNeXt (model id is 31) via
-  `seeds=(1);cl_coeffs=(0.1);skips=(100);steps=200;classifier_t=3;second_classifier_ts=(30 31);regs=(0.15);bs=6;nim=6;gpu=4;deg=30;lp='1.0'`
+  `second_classifier_ts=(30 31)`
   and then
-  `for seed in "${seeds[@]}"; do for coeff_class in "${cl_coeffs[@]}"; do for skip in "${skips[@]}"; do for second_classifier_t in "${second_classifier_ts[@]}"; do for reg in "${regs[@]}"; do python imagenet_VCEs.py --seed $seed --deg_cone_projection $deg  --projecting_cone --gen_type 'p_sample' --classifier_type $classifier_t --second_classifier_type $second_classifier_t --enforce_same_norms --background_preservation_loss --gpu $gpu --batch_size $bs --num_imgs $nim --classifier_lambda $coeff_class  --clip_guidance_lambda 0 --lp_custom $lp --lp_custom_value $reg --range_lambda 0 --lpips_sim_lambda 0 --l2_sim_lambda 0 --timestep_respacing $steps --skip_timesteps $skip --method 'dvces' --data_folder $data_folder > logs/log; done; done; done; done; done;`
+  `for second_classifier_t in "${second_classifier_ts[@]}"; do for reg in "${regs[@]}"; do python imagenet_VCEs.py --seed $seed --deg_cone_projection $deg  --projecting_cone --gen_type 'p_sample' --classifier_type $classifier_t --second_classifier_type $second_classifier_t --enforce_same_norms --background_preservation_loss --gpu $gpu --batch_size $bs --num_imgs $nim --classifier_lambda $coeff_class  --clip_guidance_lambda 0 --lp_custom $lp --lp_custom_value $reg --range_lambda 0 --lpips_sim_lambda 0 --l2_sim_lambda 0 --timestep_respacing $steps --skip_timesteps $skip --method 'dvces' --data_folder $data_folder > logs/log; done;`
 
 * Generating SVCEs for Madry + FT via
   `seeds=(1);classifier_t=3;bs=6;nim=6;gpu=4;`

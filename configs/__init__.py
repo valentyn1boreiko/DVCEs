@@ -9,7 +9,8 @@ def get_config(args):
     config = dict2namespace(setdefault(_get_raw_config(args.config), _get_raw_config("default.yml")))
 
     for key in args.__dict__:
-        if key in ['timestep_respacing', 'skip_timesteps',
+        if key in [
+                   'timestep_respacing', 'skip_timesteps',
                 'lp_custom', 'lp_custom_value', 'lpips_sim_lambda', 'l2_sim_lambda', 'range_lambda', 'l1_sim_lambda',
                 'deg_cone_projection',
                 'clip_guidance_lambda', 'classifier_lambda',
@@ -17,8 +18,9 @@ def get_config(args):
                 'seed',
                 'classifier_type', 'second_classifier_type', 'third_classifier_type', 'method']:
             if int(getattr(args, key)) != -1:
+                print('setting key value', key, )
                 setattr(config, key, getattr(args, key))
-        else:
+        elif key not in ['enforce_same_norms']:
             setattr(config, key, getattr(args, key))
 
     config.config = 'imagenet1000.yml'
@@ -28,6 +30,7 @@ def get_config(args):
     else:
         print('not using blended')
 
+    print('final config', config)
     return config
 
 
