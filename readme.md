@@ -5,19 +5,19 @@ Welcome to the codebase for our NeurIPS submission *Diffusion Visual Counterfact
 ## Examples of DVCEs for the ConvNeXt classifier
 
 <p align="center">
-  <img src="images_examples/0.png" />
+  <img src="image_examples/0.png" />
 </p>
 <p align="center">
-  <img src="images_examples/2.png" />
+  <img src="image_examples/2.png" />
 </p>
 <p align="center">
-  <img src="images_examples/4.png" />
+  <img src="image_examples/4.png" />
 </p>
 <p align="center">
-  <img src="images_examples/8.png" />
+  <img src="image_examples/8.png" />
 </p>
 <p align="center">
-  <img src="images_examples/10.png" />
+  <img src="image_examples/10.png" />
 </p>
 
 ## Setup
