@@ -1,8 +1,8 @@
 # **Diffusion Visual Counterfactual Explanations**
 
-Welcome to the codebase for our NeurIPS submission *Diffusion Visual Counterfactual Explanations.* We will show you how to generate DVCEs on the selected (and you can choose the targets yourselves) ImageNet images with the multiple norm robust model Madry + FT and two SOTA non-robust models Swin-T and ConvNeXt. 
+Welcome to the codebase for our NeurIPS submission *Diffusion Visual Counterfactual Explanations.* We will show you how to generate DVCEs on the selected (and you can choose the targets yourselves) ImageNet images with the multiple norm robust model Madry + FT and two SOTA **non-robust** models Swin-T and ConvNeXt. 
 
-## Examples of DVCEs for the ConvNeXt classifier
+## Examples of DVCEs for the **non-robust** ConvNeXt classifier
 
 <p align="center">
   <img src="image_examples/0.png" />
@@ -49,25 +49,18 @@ In the following, we show, how to first set the parameters, and then - generate 
 For any of the proposed parameter settings, feel free to adjust the values, but these are the ones we have used mostly in the paper.
 
 * Generating DVCEs without cone projection for Madry + FT via
-  `seeds=(1);cl_coeffs=(0.1);skips=(100);steps=200;classifier_t=3;second_classifier_ts=(-1);regs=(0.15);bs=6;nim=6;gpu=4;lp='1.0'` 
-   and then
-  `for seed in "${seeds[@]}"; do for coeff_class in "${cl_coeffs[@]}"; do for skip in "${skips[@]}"; do for second_classifier_t in "${second_classifier_ts[@]}"; do for reg in "${regs[@]}"; do python imagenet_VCEs.py --seed $seed --gen_type 'p_sample' --classifier_type $classifier_t --second_classifier_type $second_classifier_t --enforce_same_norms --background_preservation_loss --gpu $gpu --batch_size $bs --num_imgs $nim --classifier_lambda $coeff_class  --clip_guidance_lambda 0 --lp_custom $lp --lp_custom_value $reg --range_lambda 0 --lpips_sim_lambda 0 --l2_sim_lambda 0 --timestep_respacing $steps --skip_timesteps $skip --method 'dvces' --data_folder $data_folder > logs/log; done; done; done; done; done;`  
+  `python imagenet_VCEs.py --data_folder $data_folder --num_imgs 12 > logs/log`  
 
 * Generating DVCEs with the cone projection for Madry + FT and respectively Swin-T (model id is 30) and ConvNeXt (model id is 31) via
-  `second_classifier_ts=(30 31)`
+  `second_classifier_ts=(31 30)`
   and then
-  `for second_classifier_t in "${second_classifier_ts[@]}"; do for reg in "${regs[@]}"; do python imagenet_VCEs.py --seed $seed --deg_cone_projection $deg  --projecting_cone --gen_type 'p_sample' --classifier_type $classifier_t --second_classifier_type $second_classifier_t --enforce_same_norms --background_preservation_loss --gpu $gpu --batch_size $bs --num_imgs $nim --classifier_lambda $coeff_class  --clip_guidance_lambda 0 --lp_custom $lp --lp_custom_value $reg --range_lambda 0 --lpips_sim_lambda 0 --l2_sim_lambda 0 --timestep_respacing $steps --skip_timesteps $skip --method 'dvces' --data_folder $data_folder > logs/log; done;`
+  `for second_classifier_t in "${second_classifier_ts[@]}"; do python imagenet_VCEs.py --data_folder $data_folder --deg_cone_projection 30 --second_classifier_type 31 --num_imgs 12 > logs/log; done`
 
 * Generating SVCEs for Madry + FT via
-  `seeds=(1);classifier_t=3;bs=6;nim=6;gpu=4;`
-  and then
-  `for seed in "${seeds[@]}"; do python imagenet_VCEs.py --seed $seed --classifier_type $classifier_t --gpu $gpu --batch_size $bs --num_imgs $nim --method 'svces' --data_folder $data_folder > logs/log; done;` 
+  `python imagenet_VCEs.py --data_folder $data_folder --num_imgs 12 --config 'svce.yml' > logs/log` 
 
 * Generating blended diffusion based VCEs via
-  `seeds=(1);cl_coeffs=(25);skips=(25);steps=100;classifier_t=3;second_classifier_ts=(-1);bs=6;nim=6;gpu=4;`
-  and then
-  `for seed in "${seeds[@]}"; do for coeff_class in "${cl_coeffs[@]}"; do for skip in "${skips[@]}"; do for second_classifier_t in "${second_classifier_ts[@]}"; do python imagenet_VCEs.py --seed $seed --gen_type 'p_sample' --classifier_type $classifier_t --second_classifier_type $second_classifier_t --background_preservation_loss --gpu $gpu --batch_size $bs --num_imgs $nim --classifier_lambda $coeff_class  --clip_guidance_lambda 0 --range_lambda 50 --lpips_sim_lambda 1000 --l2_sim_lambda 10000 --timestep_respacing $steps --skip_timesteps $skip --method 'dvces' --use_blended --data_folder $data_folder > logs/log; done; done; done; done;`
-
+  `python imagenet_VCEs.py --data_folder $data_folder --num_imgs 12 --config 'blended.yml' > logs/log` 
 
 The batchsize argument `--bs` is the number of samples per gpu, so if you encounter out-of-memory errors you can reduce it without altering results.
 
