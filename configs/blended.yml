@@ -1,4 +1,4 @@
-timestep_respacing: 100
+timestep_respacing: '100'
 skip_timesteps: 25
 
 lp_custom: 0
