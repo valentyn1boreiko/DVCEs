@@ -15,8 +15,6 @@ classifier_lambda: 25
 num_imgs: 6
 batch_size: 6
 
-gpu: 0
-
 seed: 1
 
 classifier_type: 3

@@ -54,9 +54,9 @@ def get_arguments(parser=None) -> argparse.Namespace:
     # For more details read guided-diffusion/guided_diffusion/respace.py
     parser.add_argument(
         "--timestep_respacing",
-        type=int,
+        type=str,
         help="How to respace the intervals of the diffusion process (number between 1 and 1000).",
-        default=-1,
+        default='-1',
     )
     parser.add_argument(
         "--model_output_size",
@@ -190,7 +190,7 @@ def get_arguments(parser=None) -> argparse.Namespace:
         dest="export_assets",
     )
 
-    parser.add_argument('--gpu', '--list', nargs='+', default=[-1],
+    parser.add_argument('--gpu', '--list', nargs='+', default=[0],
                         help='GPU indices, if more than 1 parallel modules will be called')
 
     parser.add_argument(
@@ -212,8 +212,12 @@ def get_arguments(parser=None) -> argparse.Namespace:
         "--gen_type", type=str, help='Type of generation (p_sample/ddim)', default='p_sample'
     )
     parser.add_argument(
-        "--method", type=str, help='Method to use (dvces/svces)', default='p_sample'
+        "--method", type=str, help='Method to use (dvces/svces)', default='-1'
     )
+    parser.add_argument(
+        "--config", type=str, help='Config to use (default/blended/svce)', default='default.yml'
+    )
+
 
     defaults = dict(
         classifier_size_1=224,
@@ -222,7 +226,6 @@ def get_arguments(parser=None) -> argparse.Namespace:
         target_class=-1,
         dataset='imagenet',
         data_folder='',
-        config='default.yml',
         project_folder='.',
         consistent=False,
         step_lr=-1,
@@ -257,5 +260,6 @@ def get_arguments(parser=None) -> argparse.Namespace:
     add_dict_to_argparser(parser, defaults)
 
     args = parser.parse_args()
+    print(args)
 
     return args
