@@ -44,7 +44,7 @@ Before we can start with the generation, we have to setup the project and instal
 
 ## Creating  DVCEs/SVCEs/blended diffusion based VCEs
 
-In the following, we show, how to first set the parameters, and then - generate VCEs of the respective type for 6 selected targets. To choose your own image ids and targets, change `some_user_study_vces`, but consider targets that are semantically close to the original image, to ensure that meaningful explanations (VCEs) can be generated.
+In the following, we show, how to first set the parameters, and then - generate VCEs of the respective type for 6 selected targets. To choose your own image ids and targets, change `some_vces`, but consider targets that are semantically close to the original image, to ensure that meaningful explanations (VCEs) can be generated.
 
 For any of the proposed parameter settings, feel free to adjust the values, but these are the ones we have used mostly in the paper.
 
