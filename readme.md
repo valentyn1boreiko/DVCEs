@@ -4,6 +4,8 @@ Welcome to the codebase for our NeurIPS submission *Diffusion Visual Counterfact
 
 ## Examples of DVCEs for the **non-robust** ConvNeXt classifier
 
+In the following, first image is the starting image, `GT` stands for the "ground-truth label", and the images in the second and third columns - are VCEs in the respective target classes displayed above. For each the achieved and the initial confidences (`i`) are displayed above.
+
 <p align="center">
   <img src="image_examples/0.png" />
 </p>
