@@ -56,7 +56,7 @@ For any of the proposed parameter settings, feel free to adjust the values, but 
 * Generating DVCEs with the cone projection for Madry + FT and respectively Swin-T (model id is 30) and ConvNeXt (model id is 31) via
   `second_classifier_ts=(31 30)`
   and then
-  `for second_classifier_t in "${second_classifier_ts[@]}"; do python imagenet_VCEs.py --data_folder $data_folder --deg_cone_projection 30 --second_classifier_type 31 --num_imgs 12 > logs/log; done`
+  `for second_classifier_t in "${second_classifier_ts[@]}"; do python imagenet_VCEs.py --data_folder $data_folder --deg_cone_projection 30 --second_classifier_type $second_classifier_t --num_imgs 12 > logs/log; done`
 
 * Generating SVCEs for Madry + FT via
   `python imagenet_VCEs.py --data_folder $data_folder --num_imgs 12 --config 'svce.yml' > logs/log` 
