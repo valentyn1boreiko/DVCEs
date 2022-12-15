@@ -32,12 +32,12 @@ Before we can start with the generation, we have to setup the project and instal
 * Download the weights for Madry + FT from [here](https://drive.google.com/file/d/1sUR81A5OckMS0maneU5KWOpc99rCtESR/view?usp=sharing) into your **project_path**
 * Unzip the model file via `unzip MadryFT.zip` 
 
-* Execute `cd checkpoints/`
+* Execute `mkdir checkpoints; cd checkpoints`
 * and `wget https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_diffusion_uncond.pt`
 
 
-* Set variable *data_folder* variable to the folder that contains imagenet dataset
-  For example, if your imagenet folder is located under '/scratch/datasets/imagenet', the use `data_folder='/scratch/datasets'`
+* Set variable *data_folder* to the folder that contains imagenet dataset
+  For example, if your imagenet folder is located under '/scratch/datasets/imagenet', then use `data_folder='/scratch/datasets'`
 
 * Create a new conda env via `conda env create -f python_38_dvces.yml`
 * Activate the conda environment via `conda activate python_38_dvces`
