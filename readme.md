@@ -1,6 +1,6 @@
 # **Diffusion Visual Counterfactual Explanations**
 
-Welcome to the codebase for our NeurIPS submission *Diffusion Visual Counterfactual Explanations.* We will show you how to generate DVCEs on the selected (and you can choose the targets yourselves) ImageNet images with the multiple norm robust model Madry + FT and two SOTA **non-robust** models Swin-T and ConvNeXt. 
+Welcome to the codebase for our NeurIPS paper *Diffusion Visual Counterfactual Explanations.* We will show you how to generate DVCEs on the selected (and you can choose the targets yourselves) ImageNet images with the multiple norm robust model Madry + FT and two SOTA **non-robust** models Swin-T and ConvNeXt. 
 
 ## Examples of DVCEs for the **non-robust** ConvNeXt classifier
 
