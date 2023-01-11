@@ -62,7 +62,7 @@ For any of the proposed parameter settings, feel free to adjust the values, but 
   `python imagenet_VCEs.py --data_folder $data_folder --num_imgs 12 --config 'svce.yml' > logs/log` 
 
 * Generating blended diffusion based VCEs via
-  `python imagenet_VCEs.py --data_folder $data_folder --num_imgs 12 --config 'blended.yml' > logs/log` 
+  `python imagenet_VCEs.py --data_folder $data_folder --num_imgs 12 --config 'blended.yml' --use_blended > logs/log` 
 
 The batchsize argument `--bs` is the number of samples per gpu, so if you encounter out-of-memory errors you can reduce it without altering results.
 
