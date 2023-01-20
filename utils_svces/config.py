@@ -3,7 +3,11 @@ import glob
 from models.DeiT_utils.DeiT_robust_model import load_model_ext
 
 from timm.models import create_model
-import robust_finetuning.utils_rf as utils
+try:
+    import robust_finetuning.utils_rf as utils
+    from robust_finetuning import utils_rf as rft_utils
+except Exception as err:
+    print(str(err))
 
 try:
     import clip
@@ -24,7 +28,6 @@ import torch.nn as nn
 import socket
 from robustness import model_utils, datasets
 
-from robust_finetuning import utils_rf as rft_utils
 from torchvision.datasets.folder import DatasetFolder, has_file_allowed_extension, \
     pil_loader, accimage_loader, default_loader
 from .MadryImageNet1000resnet import load_model as load_model_Madry
