@@ -18,7 +18,9 @@ class EMAHelper(object):
             module = module.module
         for name, param in module.named_parameters():
             if param.requires_grad:
-                self.shadow[name].data = (1. - self.mu) * param.data + self.mu * self.shadow[name].data
+                self.shadow[name].data = (
+                    1.0 - self.mu
+                ) * param.data + self.mu * self.shadow[name].data
 
     def ema(self, module):
         if isinstance(module, nn.DataParallel):
@@ -29,7 +31,6 @@ class EMAHelper(object):
 
     # noinspection PyArgumentList
     def ema_copy(self, module, device):
-
         if isinstance(module, nn.DataParallel):
             inner_module = module.module
 

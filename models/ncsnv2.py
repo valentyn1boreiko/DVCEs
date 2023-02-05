@@ -33,32 +33,51 @@ class NCSNv2(BaseNCSNv2):
     def __init__(self, m_config, d_config, sigmoid=False, no_dilation=False, std=False):
         super().__init__(m_config, d_config, sigmoid, no_dilation, std)
 
-        kwargs = {'act': self.act, 'spec_norm': m_config.spec_norm, 'normalization': self.norm, 'dilation': None}
-        self.res1 = nn.ModuleList([
-            ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs),
-            ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs)]
+        kwargs = {
+            "act": self.act,
+            "spec_norm": m_config.spec_norm,
+            "normalization": self.norm,
+            "dilation": None,
+        }
+        self.res1 = nn.ModuleList(
+            [
+                ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs),
+                ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs),
+            ]
         )
 
-        self.res2 = nn.ModuleList([
-            ResidualBlock(self.ngf, 2 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs)]
+        self.res2 = nn.ModuleList(
+            [
+                ResidualBlock(self.ngf, 2 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
         if not no_dilation:
-            kwargs['dilation'] = 2
+            kwargs["dilation"] = 2
 
-        self.res3 = nn.ModuleList([
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs)]
+        self.res3 = nn.ModuleList(
+            [
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
         if not no_dilation:
-            kwargs['dilation'] = 4
+            kwargs["dilation"] = 4
 
         padding = d_config.image_size == 28
-        self.res4 = nn.ModuleList([
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample='down', adjust_padding=padding, **kwargs),
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs)]
+        self.res4 = nn.ModuleList(
+            [
+                ResidualBlock(
+                    2 * self.ngf,
+                    2 * self.ngf,
+                    resample="down",
+                    adjust_padding=padding,
+                    **kwargs
+                ),
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
         kwargs.pop("dilation")
@@ -72,7 +91,7 @@ class NCSNv2(BaseNCSNv2):
 
     def forward(self, x, y=None):
         if not self.logit_transform and not self.rescaled:
-            h = 2 * x - 1.
+            h = 2 * x - 1.0
         else:
             h = x
 
@@ -92,9 +111,11 @@ class NCSNv2(BaseNCSNv2):
         output = self.act(output)
         output = self.end_conv(output)
         if self.sigmoid:
-            output = self.sig(2 * output)  # tanh = 2*sig(2*x)-1, we want to keep the sig(2*x)
+            output = self.sig(
+                2 * output
+            )  # tanh = 2*sig(2*x)-1, we want to keep the sig(2*x)
         if self.std:
-            output = output/(torch.var(output)+1e-10)
+            output = output / (torch.var(output) + 1e-10)
 
         return output
 
@@ -103,35 +124,50 @@ class NCSNv2Deeper(BaseNCSNv2):
     def __init__(self, m_config, d_config, sigmoid=False, no_dilation=False, std=False):
         super().__init__(m_config, d_config, sigmoid, no_dilation, std)
 
-        kwargs = {'act': self.act, 'spec_norm': m_config.spec_norm, 'normalization': self.norm, 'dilation': None}
+        kwargs = {
+            "act": self.act,
+            "spec_norm": m_config.spec_norm,
+            "normalization": self.norm,
+            "dilation": None,
+        }
 
-        self.res1 = nn.ModuleList([
-            ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs),
-            ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs)]
+        self.res1 = nn.ModuleList(
+            [
+                ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs),
+                ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs),
+            ]
         )
 
-        self.res2 = nn.ModuleList([
-            ResidualBlock(self.ngf, 2 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs)]
+        self.res2 = nn.ModuleList(
+            [
+                ResidualBlock(self.ngf, 2 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
-        self.res3 = nn.ModuleList([
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs)]
+        self.res3 = nn.ModuleList(
+            [
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
         if not no_dilation:
-            kwargs['dilation'] = 2
-        self.res4 = nn.ModuleList([
-            ResidualBlock(2 * self.ngf, 4 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(4 * self.ngf, 4 * self.ngf, resample=None, **kwargs)]
+            kwargs["dilation"] = 2
+        self.res4 = nn.ModuleList(
+            [
+                ResidualBlock(2 * self.ngf, 4 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(4 * self.ngf, 4 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
         if not no_dilation:
-            kwargs['dilation'] = 4
-        self.res5 = nn.ModuleList([
-            ResidualBlock(4 * self.ngf, 4 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(4 * self.ngf, 4 * self.ngf, resample=None, **kwargs)]
+            kwargs["dilation"] = 4
+        self.res5 = nn.ModuleList(
+            [
+                ResidualBlock(4 * self.ngf, 4 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(4 * self.ngf, 4 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
         kwargs.pop("dilation")
@@ -146,7 +182,7 @@ class NCSNv2Deeper(BaseNCSNv2):
 
     def forward(self, x, y=None):
         if not self.logit_transform and not self.rescaled:
-            h = 2 * x - 1.
+            h = 2 * x - 1.0
         else:
             h = x
 
@@ -168,9 +204,11 @@ class NCSNv2Deeper(BaseNCSNv2):
         output = self.act(output)
         output = self.end_conv(output)
         if self.sigmoid:
-            output = self.sig(2 * output)  # tanh = 2*sig(2*x)-1, we want to keep the sig(2*x)
+            output = self.sig(
+                2 * output
+            )  # tanh = 2*sig(2*x)-1, we want to keep the sig(2*x)
         if self.std:
-            output = output/(torch.var(output)+1e-10)
+            output = output / (torch.var(output) + 1e-10)
 
         return output
 
@@ -179,39 +217,56 @@ class NCSNv2Deepest(BaseNCSNv2):
     def __init__(self, m_config, d_config, sigmoid=False, no_dilation=False, std=False):
         super().__init__(m_config, d_config, sigmoid, no_dilation, std)
 
-        kwargs = {'act': self.act, 'spec_norm': m_config.spec_norm, 'normalization': self.norm, 'dilation': None}
-        self.res1 = nn.ModuleList([
-            ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs),
-            ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs)]
+        kwargs = {
+            "act": self.act,
+            "spec_norm": m_config.spec_norm,
+            "normalization": self.norm,
+            "dilation": None,
+        }
+        self.res1 = nn.ModuleList(
+            [
+                ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs),
+                ResidualBlock(self.ngf, self.ngf, resample=None, **kwargs),
+            ]
         )
 
-        self.res2 = nn.ModuleList([
-            ResidualBlock(self.ngf, 2 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs)]
+        self.res2 = nn.ModuleList(
+            [
+                ResidualBlock(self.ngf, 2 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
-        self.res3 = nn.ModuleList([
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs)]
+        self.res3 = nn.ModuleList(
+            [
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
-        self.res31 = nn.ModuleList([
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs)]
+        self.res31 = nn.ModuleList(
+            [
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(2 * self.ngf, 2 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
         if not no_dilation:
-            kwargs['dilation'] = 2
-        self.res4 = nn.ModuleList([
-            ResidualBlock(2 * self.ngf, 4 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(4 * self.ngf, 4 * self.ngf, resample=None, **kwargs)]
+            kwargs["dilation"] = 2
+        self.res4 = nn.ModuleList(
+            [
+                ResidualBlock(2 * self.ngf, 4 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(4 * self.ngf, 4 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
         if not no_dilation:
-            kwargs['dilation'] = 4
-        self.res5 = nn.ModuleList([
-            ResidualBlock(4 * self.ngf, 4 * self.ngf, resample='down', **kwargs),
-            ResidualBlock(4 * self.ngf, 4 * self.ngf, resample=None, **kwargs)]
+            kwargs["dilation"] = 4
+        self.res5 = nn.ModuleList(
+            [
+                ResidualBlock(4 * self.ngf, 4 * self.ngf, resample="down", **kwargs),
+                ResidualBlock(4 * self.ngf, 4 * self.ngf, resample=None, **kwargs),
+            ]
         )
 
         kwargs.pop("dilation")
@@ -219,7 +274,9 @@ class NCSNv2Deepest(BaseNCSNv2):
         self.refine1 = RefineBlock([4 * self.ngf], 4 * self.ngf, start=True, **kwargs)
         self.refine2 = RefineBlock([4 * self.ngf, 4 * self.ngf], 2 * self.ngf, **kwargs)
         self.refine3 = RefineBlock([2 * self.ngf, 2 * self.ngf], 2 * self.ngf, **kwargs)
-        self.refine31 = RefineBlock([2 * self.ngf, 2 * self.ngf], 2 * self.ngf, **kwargs)
+        self.refine31 = RefineBlock(
+            [2 * self.ngf, 2 * self.ngf], 2 * self.ngf, **kwargs
+        )
         self.refine4 = RefineBlock([2 * self.ngf, 2 * self.ngf], self.ngf, **kwargs)
         self.refine5 = RefineBlock([self.ngf, self.ngf], self.ngf, end=True, **kwargs)
 
@@ -227,7 +284,7 @@ class NCSNv2Deepest(BaseNCSNv2):
 
     def forward(self, x, y=None):
         if not self.logit_transform and not self.rescaled:
-            h = 2 * x - 1.
+            h = 2 * x - 1.0
         else:
             h = x
 
@@ -251,9 +308,11 @@ class NCSNv2Deepest(BaseNCSNv2):
         output = self.act(output)
         output = self.end_conv(output)
         if self.sigmoid:
-            output = self.sig(2 * output)  # tanh = 2*sig(2*x)-1, we want to keep the sig(2*x)
+            output = self.sig(
+                2 * output
+            )  # tanh = 2*sig(2*x)-1, we want to keep the sig(2*x)
         if self.std:
-            output = output/(torch.var(output)+1e-10)
+            output = output / (torch.var(output) + 1e-10)
 
         return output
 

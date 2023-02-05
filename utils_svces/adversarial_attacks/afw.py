@@ -60,9 +60,10 @@ def maxlin(x_orig, w_orig, eps, p, verbose=False):
     fs = gammacum + mucum - eps ** p
     ind = fs[:, 0] > 0.  # * (fs[-1] < 0.)
     # print(ind)
-    lb = torch.zeros(bs).long()
+    lb = torch.zeros(bs, device=x.device).long()
     ub = lb + fs.shape[1]
     u = torch.arange(bs)
+    print('devices', lb.device, ub.device, fs.device)
     for c in range(math.ceil(math.log2(fs.shape[1]))):
         a = (lb + ub) // 2
         indnew = fs[u, a] > 0.  # - 1e-6
@@ -298,10 +299,16 @@ class AFWAttack(AdversarialAttack):
         loss_best = loss_indiv.detach().clone()
 
 
-        alpha = 0.75  # 0.75
+        ###alpha = 0.75  # 0.75
+        ###a = 0.75 if i > 0 else 1.0
         #print('Using fw, alpha is', alpha)
 
-        step_size = alpha * torch.ones([x.shape[0], *([1] * self.ndims)]).to(device).detach()
+        ###step_size = alpha * torch.ones([x.shape[0], *([1] * self.ndims)]).to(device).detach()
+        ###step_size = alphas / (torch.sqrt(torch.tensor(i)) + 2)
+
+        alphas = torch.ones([x.shape[0], *(
+                [1] * self.ndims)]).to(self.device).detach() * 2
+
         k = self.n_iter_2 + 0
         counter3 = 0
 
@@ -313,6 +320,8 @@ class AFWAttack(AdversarialAttack):
             with torch.no_grad():
                 x_adv = x_adv.detach()
 
+                step_size = alphas / (torch.sqrt(torch.tensor(i)) + 2)
+                print('Using fw mode, stepsize is, sqrt alphas', (torch.sqrt(torch.tensor(i)) + 2), step_size)
                 #print('Using fw mode, stepsize is', step_size)
                 #print('Momentum fw is', self.fw_momentum)
                 if i == 0:
@@ -444,7 +453,9 @@ class AFWAttack(AdversarialAttack):
 
                     if fl_oscillation.sum() > 0:
                         ind_fl_osc = (fl_oscillation > 0).nonzero(as_tuple=False).squeeze()
-                        step_size[ind_fl_osc] /= 2.0
+                        ###step_size[ind_fl_osc] /= 2.0
+                        print('alphas up 0.75')
+                        alphas[ind_fl_osc] *= 0.75
                         n_reduced = fl_oscillation.sum()
 
                         x_adv[ind_fl_osc] = x_best[ind_fl_osc].clone()

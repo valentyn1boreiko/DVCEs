@@ -1,0 +1,5 @@
+/checkpoints/
+/ImageNet1000Models/
+/logs/*
+/ImageNetVCEs/
+**/__pycache__/

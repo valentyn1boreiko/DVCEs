@@ -2,7 +2,6 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.autograd import Variable
 
 
@@ -30,7 +29,9 @@ class ShakeDropFunction(torch.autograd.Function):
         if training:
             gate = ctx.saved_tensors[0]
             if gate.item() == 0:
-                beta = torch.empty(grad_output.size(0), device=grad_output.device).uniform_(0, 1)
+                beta = torch.empty(
+                    grad_output.size(0), device=grad_output.device
+                ).uniform_(0, 1)
                 beta = beta.view(beta.size(0), 1, 1, 1).expand_as(grad_output)
                 beta = Variable(beta)
                 return beta * grad_output, None, None, None
@@ -41,7 +42,6 @@ class ShakeDropFunction(torch.autograd.Function):
 
 
 class ShakeDrop(nn.Module):
-
     def __init__(self, p_drop=0.5, alpha_range=[-1, 1]):
         super(ShakeDrop, self).__init__()
         self.p_drop = p_drop

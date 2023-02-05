@@ -1,16 +1,25 @@
-#https://github.com/hongyi-zhang/Fixup/blob/master/cifar/models/fixup_resnet_cifar.py
+# https://github.com/hongyi-zhang/Fixup/blob/master/cifar/models/fixup_resnet_cifar.py
 import torch
 import torch.nn as nn
 import numpy as np
 
 
-__all__ = ['FixupResNet', 'fixup_resnet20', 'fixup_resnet32', 'fixup_resnet44', 'fixup_resnet56', 'fixup_resnet110', 'fixup_resnet1202']
+__all__ = [
+    "FixupResNet",
+    "fixup_resnet20",
+    "fixup_resnet32",
+    "fixup_resnet44",
+    "fixup_resnet56",
+    "fixup_resnet110",
+    "fixup_resnet1202",
+]
 
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=1, bias=False)
+    return nn.Conv2d(
+        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False
+    )
 
 
 class FixupBasicBlock(nn.Module):
@@ -49,7 +58,6 @@ class FixupBasicBlock(nn.Module):
 
 
 class FixupResNet(nn.Module):
-
     def __init__(self, block, layers, num_classes=10):
         super(FixupResNet, self).__init__()
         self.num_layers = sum(layers)
@@ -66,7 +74,15 @@ class FixupResNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, FixupBasicBlock):
-                nn.init.normal_(m.conv1.weight, mean=0, std=np.sqrt(2 / (m.conv1.weight.shape[0] * np.prod(m.conv1.weight.shape[2:]))) * self.num_layers ** (-0.5))
+                nn.init.normal_(
+                    m.conv1.weight,
+                    mean=0,
+                    std=np.sqrt(
+                        2
+                        / (m.conv1.weight.shape[0] * np.prod(m.conv1.weight.shape[2:]))
+                    )
+                    * self.num_layers ** (-0.5),
+                )
                 nn.init.constant_(m.conv2.weight, 0)
             elif isinstance(m, nn.Linear):
                 nn.init.constant_(m.weight, 0)
@@ -101,42 +117,36 @@ class FixupResNet(nn.Module):
 
 
 def fixup_resnet20(**kwargs):
-    """Constructs a Fixup-ResNet-20 density_model.
-    """
+    """Constructs a Fixup-ResNet-20 density_model."""
     model = FixupResNet(FixupBasicBlock, [3, 3, 3], **kwargs)
     return model
 
 
 def fixup_resnet32(**kwargs):
-    """Constructs a Fixup-ResNet-32 density_model.
-    """
+    """Constructs a Fixup-ResNet-32 density_model."""
     model = FixupResNet(FixupBasicBlock, [5, 5, 5], **kwargs)
     return model
 
 
 def fixup_resnet44(**kwargs):
-    """Constructs a Fixup-ResNet-44 density_model.
-    """
+    """Constructs a Fixup-ResNet-44 density_model."""
     model = FixupResNet(FixupBasicBlock, [7, 7, 7], **kwargs)
     return model
 
 
 def fixup_resnet56(**kwargs):
-    """Constructs a Fixup-ResNet-56 density_model.
-    """
+    """Constructs a Fixup-ResNet-56 density_model."""
     model = FixupResNet(FixupBasicBlock, [9, 9, 9], **kwargs)
     return model
 
 
 def fixup_resnet110(**kwargs):
-    """Constructs a Fixup-ResNet-110 density_model.
-    """
+    """Constructs a Fixup-ResNet-110 density_model."""
     model = FixupResNet(FixupBasicBlock, [18, 18, 18], **kwargs)
     return model
 
 
 def fixup_resnet1202(**kwargs):
-    """Constructs a Fixup-ResNet-1202 density_model.
-    """
+    """Constructs a Fixup-ResNet-1202 density_model."""
     model = FixupResNet(FixupBasicBlock, [200, 200, 200], **kwargs)
-    return model    
+    return model

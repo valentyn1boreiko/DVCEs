@@ -3,18 +3,19 @@ import os
 
 import yaml
 
-__all__ = ['get_config', 'print_config']
+__all__ = ["get_config", "print_config"]
 
 
 def get_config(args):
-
-    config = dict2namespace(setdefault(_get_raw_config(args.config), _get_raw_config("default.yml")))
+    config = dict2namespace(
+        setdefault(_get_raw_config(args.config), _get_raw_config("default.yml"))
+    )
 
     if not hasattr(config.sampling, "sigma_dist"):
         config.sampling.sigma_dist = config.model.sigma_dist
     if not hasattr(config.biggan, "resolution"):
         config.biggan.resolution = config.data.image_size
-    if args.script_type != 'finetuning':
+    if args.script_type != "finetuning":
         if args.consistent:
             config.sampling.consistent = args.consistent
             config.sampling.noise_first = False
@@ -28,9 +29,19 @@ def get_config(args):
             config.sampling.batch_size = args.batch_size
             config.fast_fid.batch_size = args.batch_size
         # ToDo: experimental and is only using model_types
-        if args.model_types is not None and len(args.model_types)==1 and args.model_types[0] in [0, 6, 23] and config.data.dataset in ['tinyImages', 'CIFAR10']:
+        if (
+            args.model_types is not None
+            and len(args.model_types) == 1
+            and args.model_types[0] in [0, 6, 23]
+            and config.data.dataset in ["tinyImages", "CIFAR10"]
+        ):
             config.sampling.batch_size = min(200, config.sampling.batch_size)
-        if args.model_types is not None and len(args.model_types) == 1 and args.model_types[0] in [8] and config.data.dataset in ['tinyImages', 'CIFAR10']:
+        if (
+            args.model_types is not None
+            and len(args.model_types) == 1
+            and args.model_types[0] in [8]
+            and config.data.dataset in ["tinyImages", "CIFAR10"]
+        ):
             config.sampling.batch_size = min(800, config.sampling.batch_size)
 
         if args.ODI_steps == -1:
@@ -56,13 +67,13 @@ def get_config(args):
 
 def _get_raw_config(name):
     here = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(here, '../blended_diffusion/configs', name), 'r') as f:
+    with open(os.path.join(here, "../blended_diffusion/configs", name), "r") as f:
         yaml_dict = yaml.load(f, Loader=yaml.FullLoader)
     return yaml_dict
 
 
 def setdefault(config, default):
-    print('config is', config, 'default is', default)
+    print("config is", config, "default is", default)
     for x in default:
         v = default.get(x)
         if isinstance(v, dict) and x in config:

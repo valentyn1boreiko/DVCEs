@@ -1,17 +1,34 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import math
 from .restartattack import RestartAttack
-from .utils import project_perturbation, normalize_perturbation, create_early_stopping_mask, initialize_perturbation
+from .utils import (
+    project_perturbation,
+    normalize_perturbation,
+    create_early_stopping_mask,
+    initialize_perturbation,
+)
 
 
 ###################################################################################################
 class ArgminPGD(RestartAttack):
-    def __init__(self, eps, iterations, stepsize, num_classes, momentum=0.9, norm='inf', loss='CrossEntropy',
-                 normalize_grad=True, early_stopping=0, restarts=0, init_noise_generator=None, model=None,
-                 save_trajectory=False):
-        super().__init__(loss, restarts, num_classes, model=model, save_trajectory=save_trajectory)
+    def __init__(
+        self,
+        eps,
+        iterations,
+        stepsize,
+        num_classes,
+        momentum=0.9,
+        norm="inf",
+        loss="CrossEntropy",
+        normalize_grad=True,
+        early_stopping=0,
+        restarts=0,
+        init_noise_generator=None,
+        model=None,
+        save_trajectory=False,
+    ):
+        super().__init__(
+            loss, restarts, num_classes, model=model, save_trajectory=save_trajectory
+        )
         self.eps = eps
         self.iterations = iterations
         self.stepsize = stepsize
@@ -27,34 +44,35 @@ class ArgminPGD(RestartAttack):
 
     def get_config_dict(self):
         dict = {}
-        dict['type'] = 'ArgminPGD'
-        dict['eps'] = self.eps
-        dict['iterations'] = self.iterations
-        dict['stepsize'] = self.stepsize
-        dict['momentum'] = self.momentum
-        dict['norm'] = self.norm
+        dict["type"] = "ArgminPGD"
+        dict["eps"] = self.eps
+        dict["iterations"] = self.iterations
+        dict["stepsize"] = self.stepsize
+        dict["momentum"] = self.momentum
+        dict["norm"] = self.norm
         if isinstance(self.loss, str):
-            dict['loss'] = self.loss
+            dict["loss"] = self.loss
         else:
-            dict['loss'] = 'custom'
-        dict['normalize_grad'] = self.normalize_grad
-        dict['early_stopping'] = self.early_stopping
-        dict['restarts'] = self.restarts
+            dict["loss"] = "custom"
+        dict["normalize_grad"] = self.normalize_grad
+        dict["early_stopping"] = self.early_stopping
+        dict["restarts"] = self.restarts
         return dict
 
-
     def perturb_inner(self, x, y, targeted=False, x_init=None):
-        l_f = self._get_loss_f(x, y, targeted, 'none')
+        l_f = self._get_loss_f(x, y, targeted, "none")
 
         best_perts = x.new_empty(x.shape)
         best_losses = 1e13 * x.new_ones(x.shape[0])
 
         velocity = torch.zeros_like(x)
 
-        #initialize perturbation
-        pert = initialize_perturbation(x, self.eps, self.norm, x_init, self.init_noise_generator)
+        # initialize perturbation
+        pert = initialize_perturbation(
+            x, self.eps, self.norm, x_init, self.init_noise_generator
+        )
 
-        #trajectory container
+        # trajectory container
         if self.save_trajectory:
             trajectory = torch.zeros((self.iterations + 1,) + x.shape, device=x.device)
             trajectory[0, :] = x
@@ -76,11 +94,13 @@ class ArgminPGD(RestartAttack):
                     break
 
                 if self.early_stopping > 0:
-                    finished, mask = create_early_stopping_mask(out, y, self.early_stopping, targeted)
+                    finished, mask = create_early_stopping_mask(
+                        out, y, self.early_stopping, targeted
+                    )
                     if finished:
                         break
                 else:
-                    mask = 1.
+                    mask = 1.0
 
                 loss = torch.mean(loss_expanded)
                 grad = torch.autograd.grad(loss, pert)[0]
@@ -89,7 +109,9 @@ class ArgminPGD(RestartAttack):
                 # pgd on given loss
                 if self.normalize_grad:
                     # https://arxiv.org/pdf/1710.06081.pdf the l1 normalization follows the momentum iterative method
-                    l1_norm_gradient =  1e-10 + torch.sum(grad.abs().reshape(x.shape[0], -1), dim=1).view(-1,1,1,1)
+                    l1_norm_gradient = 1e-10 + torch.sum(
+                        grad.abs().reshape(x.shape[0], -1), dim=1
+                    ).view(-1, 1, 1, 1)
                     velocity = self.momentum * velocity + grad / l1_norm_gradient
                     norm_velocity = normalize_perturbation(velocity, self.norm)
                 else:
@@ -99,7 +121,7 @@ class ArgminPGD(RestartAttack):
 
                 pert = pert - self.stepsize * mask * norm_velocity
                 pert = project_perturbation(pert, self.eps, self.norm)
-                pert = torch.clamp(x + pert, 0, 1) - x #box constraint
+                pert = torch.clamp(x + pert, 0, 1) - x  # box constraint
 
                 if self.save_trajectory:
                     trajectory[i + 1] = x + pert

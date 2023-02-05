@@ -1,5 +1,6 @@
 from torch import nn
 
+
 class CifarAlexNet(nn.Module):
     def __init__(self, num_classes=10):
         super().__init__()

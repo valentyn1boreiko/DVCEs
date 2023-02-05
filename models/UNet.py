@@ -5,9 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-__all__ = ['UNet']
+__all__ = ["UNet"]
 
-from models import layers
 
 
 def init_weights(self, scale=1, module=False):
@@ -43,20 +42,25 @@ def Normalize(num_channels):
 
 
 class Nin(nn.Module):
-    """ Shared weights """
+    """Shared weights"""
 
-    def __init__(self, channel_in: int, channel_out: int, init_scale=1.):
+    def __init__(self, channel_in: int, channel_out: int, init_scale=1.0):
         super().__init__()
         self.channel_out = channel_out
-        self.weights = nn.Parameter(torch.zeros(channel_out, channel_in), requires_grad=True)
-        torch.nn.init.xavier_uniform_(self.weights, math.sqrt(
-            init_scale / 2))  # tf: sqrt(3*a/fan_avg) = sqrt(a/2)sqrt(6/fan_avg) => gain = sqrt(a/2)
+        self.weights = nn.Parameter(
+            torch.zeros(channel_out, channel_in), requires_grad=True
+        )
+        torch.nn.init.xavier_uniform_(
+            self.weights, math.sqrt(init_scale / 2)
+        )  # tf: sqrt(3*a/fan_avg) = sqrt(a/2)sqrt(6/fan_avg) => gain = sqrt(a/2)
         self.bias = nn.Parameter(torch.zeros(channel_out), requires_grad=True)
         torch.nn.init.zeros_(self.bias)
 
     def forward(self, x):
         bs, _, width, _ = x.shape
-        res = torch.bmm(self.weights.repeat(bs, 1, 1), x.flatten(2)) + self.bias.unsqueeze(0).unsqueeze(-1)
+        res = torch.bmm(
+            self.weights.repeat(bs, 1, 1), x.flatten(2)
+        ) + self.bias.unsqueeze(0).unsqueeze(-1)
         return res.view(bs, self.channel_out, width, width)
 
 
@@ -108,12 +112,12 @@ class AttnBlock(nn.Module):
     def forward(self, x):
         h = self.normalize(x)
         q, k, v = self.Q(h), self.K(h), self.V(h)
-        w = torch.einsum('abcd,abef->acdef', q, k) * (1 / math.sqrt(self.c))
+        w = torch.einsum("abcd,abef->acdef", q, k) * (1 / math.sqrt(self.c))
 
         batch_size, width, *_ = w.shape
         w = F.softmax(w.view(batch_size, width, width, width * width), dim=-1)
         w = w.view(batch_size, *[width] * 4)
-        h = torch.einsum('abcde,afde->afbc', w, v)
+        h = torch.einsum("abcde,afde->afbc", w, v)
         return x + self.OUT(h)
 
 
@@ -130,18 +134,20 @@ class Upsample(nn.Module):
 
 def get_timestep_embedding(timesteps, embedding_dim: int = 128):
     """
-      From Fairseq.
-      Build sinusoidal embeddings.
-      This matches the implementation in tensor2tensor, but differs slightly
-      from the description in Section 3.5 of "Attention Is All You Need".
-      https://github.com/pytorch/fairseq/blob/master/fairseq/modules/sinusoidal_positional_embedding.py
+    From Fairseq.
+    Build sinusoidal embeddings.
+    This matches the implementation in tensor2tensor, but differs slightly
+    from the description in Section 3.5 of "Attention Is All You Need".
+    https://github.com/pytorch/fairseq/blob/master/fairseq/modules/sinusoidal_positional_embedding.py
     """
     assert len(timesteps.shape) == 1  # and timesteps.dtype == tf.int32
-    print('using embeddings')
+    print("using embeddings")
     num_embeddings = 1024  # TODO
     half_dim = embedding_dim // 2
     emb = math.log(10000) / (half_dim - 1)
-    emb = torch.exp(torch.arange(half_dim, dtype=torch.float, device=timesteps.device) * -emb)
+    emb = torch.exp(
+        torch.arange(half_dim, dtype=torch.float, device=timesteps.device) * -emb
+    )
 
     # emb = torch.arange(num_embeddings, dtype=torch.float).unsqueeze(1) * emb.unsqueeze(0)
     emb = timesteps.float().unsqueeze(1) * emb.unsqueeze(0)
@@ -149,8 +155,10 @@ def get_timestep_embedding(timesteps, embedding_dim: int = 128):
     if embedding_dim % 2 == 1:  # zero pad
         emb = torch.cat([emb, torch.zeros(num_embeddings, 1)], dim=1)
 
-    assert [*emb.shape] == [timesteps.shape[0],
-                            embedding_dim], f"{emb.shape}, {str([timesteps.shape[0], embedding_dim])}"
+    assert [*emb.shape] == [
+        timesteps.shape[0],
+        embedding_dim,
+    ], f"{emb.shape}, {str([timesteps.shape[0], embedding_dim])}"
     return emb
 
 
@@ -162,7 +170,15 @@ def partialclass(cls, *args, **kwds):
 
 
 class UNet(nn.Module):
-    def __init__(self, n_channels=3, deeper=False, dropout=0., conditional=False, ngf=128, n_sigmas=1):
+    def __init__(
+        self,
+        n_channels=3,
+        deeper=False,
+        dropout=0.0,
+        conditional=False,
+        ngf=128,
+        n_sigmas=1,
+    ):
         super(UNet, self).__init__()
 
         self.locals = [n_channels, deeper, dropout, conditional, ngf, n_sigmas]
@@ -175,7 +191,9 @@ class UNet(nn.Module):
         self.dropout = nn.Dropout2d(p=dropout)
 
         # TODO make sure channel is in dimensions 1 [bs x c x 32 x 32]
-        ResnetBlock_ = partialclass(ResnetBlock, dropout=self.dropout, tembdim=ch * 4, conditional=conditional)
+        ResnetBlock_ = partialclass(
+            ResnetBlock, dropout=self.dropout, tembdim=ch * 4, conditional=conditional
+        )
 
         if deeper:
             ch_mult = [ch * n for n in (1, 2, 2, 2, 4, 4)]
@@ -184,7 +202,9 @@ class UNet(nn.Module):
 
         # DOWN
         self.downblocks = nn.ModuleList()
-        self.downblocks.append(nn.Conv2d(n_channels, ch, kernel_size=3, padding=1, stride=1))
+        self.downblocks.append(
+            nn.Conv2d(n_channels, ch, kernel_size=3, padding=1, stride=1)
+        )
         prev_ch = ch_mult[0]
         ch_size = [ch]
         for i, ich in enumerate(ch_mult):
@@ -195,7 +215,9 @@ class UNet(nn.Module):
                     self.downblocks.append(AttnBlock(ich))
 
             if i != len(ch_mult) - 1:
-                self.downblocks.append(nn.Conv2d(ich, ich, kernel_size=3, stride=2, padding=1))
+                self.downblocks.append(
+                    nn.Conv2d(ich, ich, kernel_size=3, stride=2, padding=1)
+                )
                 ch_size += [ich]
             prev_ch = ich
         init_weights(self.downblocks, module=True)
@@ -227,12 +249,12 @@ class UNet(nn.Module):
             nn.Linear(ch, ch * 4),
             self.nonlinearity,
             nn.Linear(ch * 4, ch * 4),
-            self.nonlinearity
+            self.nonlinearity,
         )
         init_weights(self.temb_dense, module=True)
 
         # TODO: ?
-        #if self.n_sigmas != 1:
+        # if self.n_sigmas != 1:
         #    self.which_embedding = functools.partial(layers.SNEmbedding, num_svs=num_D_SVs, num_itrs=num_D_SV_itrs,
         #                                             eps=SN_eps)
         #    self.embed = self.which_embedding(self.n_classes, self.arch['out_channels'][-1])

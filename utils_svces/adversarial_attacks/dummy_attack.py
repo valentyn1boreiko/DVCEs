@@ -1,5 +1,6 @@
 from .adversarialattack import AdversarialAttack
 
+
 ##################################
 class DummyAttack(AdversarialAttack):
     def __init__(self):

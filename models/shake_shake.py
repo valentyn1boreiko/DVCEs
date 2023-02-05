@@ -8,9 +8,10 @@ from .shake_shake_function import get_alpha_beta, shake_function
 Based on code from https://github.com/hysts/pytorch_shake_shake
 """
 
+
 def initialize_weights(module):
     if isinstance(module, nn.Conv2d):
-        nn.init.kaiming_normal_(module.weight.data, mode='fan_out')
+        nn.init.kaiming_normal_(module.weight.data, mode="fan_out")
     elif isinstance(module, nn.BatchNorm2d):
         module.weight.data.fill_(1)
         module.bias.data.zero_()
@@ -32,12 +33,8 @@ class ResidualPath(nn.Module):
         )
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.conv2 = nn.Conv2d(
-            out_channels,
-            out_channels,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            bias=False)
+            out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False
+        )
         self.bn2 = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
@@ -51,19 +48,11 @@ class DownsamplingShortcut(nn.Module):
     def __init__(self, in_channels):
         super(DownsamplingShortcut, self).__init__()
         self.conv1 = nn.Conv2d(
-            in_channels,
-            in_channels,
-            kernel_size=1,
-            stride=1,
-            padding=0,
-            bias=False)
+            in_channels, in_channels, kernel_size=1, stride=1, padding=0, bias=False
+        )
         self.conv2 = nn.Conv2d(
-            in_channels,
-            in_channels,
-            kernel_size=1,
-            stride=1,
-            padding=0,
-            bias=False)
+            in_channels, in_channels, kernel_size=1, stride=1, padding=0, bias=False
+        )
         self.bn = nn.BatchNorm2d(in_channels * 2)
 
     def forward(self, x):
@@ -92,8 +81,7 @@ class BasicBlock(nn.Module):
 
         self.shortcut = nn.Sequential()
         if in_channels != out_channels:
-            self.shortcut.add_module('downsample',
-                                     DownsamplingShortcut(in_channels))
+            self.shortcut.add_module("downsample", DownsamplingShortcut(in_channels))
 
     def forward(self, x):
         x1 = self.residual_path1(x)
@@ -114,13 +102,16 @@ class ShakeNet(nn.Module):
     def __init__(self, config):
         super().__init__()
 
-        input_shape = config['input_shape']
-        n_classes = config['n_classes']
+        input_shape = config["input_shape"]
+        n_classes = config["n_classes"]
 
-        base_channels = config['base_channels']
-        depth = config['depth']
-        self.shake_config = (config['shake_forward'], config['shake_backward'],
-                             config['shake_image'])
+        base_channels = config["base_channels"]
+        depth = config["depth"]
+        self.shake_config = (
+            config["shake_forward"],
+            config["shake_backward"],
+            config["shake_image"],
+        )
 
         block = BasicBlock
         n_blocks_per_stage = (depth - 2) // 6
@@ -134,20 +125,25 @@ class ShakeNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
-            bias=False)
+            bias=False,
+        )
         self.bn = nn.BatchNorm2d(base_channels)
 
         self.stage1 = self._make_stage(
-            n_channels[0], n_channels[0], n_blocks_per_stage, block, stride=1)
+            n_channels[0], n_channels[0], n_blocks_per_stage, block, stride=1
+        )
         self.stage2 = self._make_stage(
-            n_channels[0], n_channels[1], n_blocks_per_stage, block, stride=2)
+            n_channels[0], n_channels[1], n_blocks_per_stage, block, stride=2
+        )
         self.stage3 = self._make_stage(
-            n_channels[1], n_channels[2], n_blocks_per_stage, block, stride=2)
+            n_channels[1], n_channels[2], n_blocks_per_stage, block, stride=2
+        )
 
         # compute conv feature size
         with torch.no_grad():
-            self.feature_size = self._forward_conv(
-                torch.zeros(*input_shape)).view(-1).shape[0]
+            self.feature_size = (
+                self._forward_conv(torch.zeros(*input_shape)).view(-1).shape[0]
+            )
 
         self.fc = nn.Linear(self.feature_size, n_classes)
 
@@ -157,7 +153,7 @@ class ShakeNet(nn.Module):
     def _make_stage(self, in_channels, out_channels, n_blocks, block, stride):
         stage = nn.Sequential()
         for index in range(n_blocks):
-            block_name = 'block{}'.format(index + 1)
+            block_name = "block{}".format(index + 1)
             if index == 0:
                 stage.add_module(
                     block_name,
@@ -165,7 +161,9 @@ class ShakeNet(nn.Module):
                         in_channels,
                         out_channels,
                         stride=stride,
-                        shake_config=self.shake_config))
+                        shake_config=self.shake_config,
+                    ),
+                )
             else:
                 stage.add_module(
                     block_name,
@@ -173,7 +171,9 @@ class ShakeNet(nn.Module):
                         out_channels,
                         out_channels,
                         stride=1,
-                        shake_config=self.shake_config))
+                        shake_config=self.shake_config,
+                    ),
+                )
         return stage
 
     def _forward_conv(self, x):

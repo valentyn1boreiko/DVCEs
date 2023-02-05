@@ -10,7 +10,6 @@ from utils_svces.models.models_32x32.shakedrop import ShakeDrop
 
 
 class ShakeBasicBlock(nn.Module):
-
     def __init__(self, in_ch, out_ch, stride=1, p_shakedrop=1.0):
         super(ShakeBasicBlock, self).__init__()
         self.downsampled = stride == 2
@@ -22,7 +21,11 @@ class ShakeBasicBlock(nn.Module):
         h = self.branch(x)
         h = self.shake_drop(h)
         h0 = x if not self.downsampled else self.shortcut(x)
-        pad_zero = torch.zeros((h0.size(0), h.size(1) - h0.size(1), h0.size(2), h0.size(3)), dtype=torch.float, device=x.device)
+        pad_zero = torch.zeros(
+            (h0.size(0), h.size(1) - h0.size(1), h0.size(2), h0.size(3)),
+            dtype=torch.float,
+            device=x.device,
+        )
         h0 = torch.cat([h0, pad_zero], dim=1)
 
         return h + h0
@@ -34,7 +37,8 @@ class ShakeBasicBlock(nn.Module):
             nn.BatchNorm2d(out_ch),
             nn.ReLU(inplace=True),
             nn.Conv2d(out_ch, out_ch, 3, padding=1, stride=1, bias=False),
-            nn.BatchNorm2d(out_ch))
+            nn.BatchNorm2d(out_ch),
+        )
 
 
 class ShakePyramidNet(nn.Module):
@@ -43,11 +47,16 @@ class ShakePyramidNet(nn.Module):
         in_ch = 16
         # for BasicBlock
         n_units = (depth - 2) // 6
-        in_chs = [in_ch] + [in_ch + math.ceil((alpha / (3 * n_units)) * (i + 1)) for i in range(3 * n_units)]
+        in_chs = [in_ch] + [
+            in_ch + math.ceil((alpha / (3 * n_units)) * (i + 1))
+            for i in range(3 * n_units)
+        ]
         block = ShakeBasicBlock
 
         self.in_chs, self.u_idx = in_chs, 0
-        self.ps_shakedrop = [1 - (1.0 - (0.5 / (3 * n_units)) * (i + 1)) for i in range(3 * n_units)]
+        self.ps_shakedrop = [
+            1 - (1.0 - (0.5 / (3 * n_units)) * (i + 1)) for i in range(3 * n_units)
+        ]
 
         self.c_in = nn.Conv2d(3, in_chs[0], 3, padding=1)
         self.bn_in = nn.BatchNorm2d(in_chs[0])
@@ -61,7 +70,7 @@ class ShakePyramidNet(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
+                m.weight.data.normal_(0, math.sqrt(2.0 / n))
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
@@ -82,7 +91,13 @@ class ShakePyramidNet(nn.Module):
     def _make_layer(self, n_units, block, stride=1):
         layers = []
         for i in range(int(n_units)):
-            layers.append(block(self.in_chs[self.u_idx], self.in_chs[self.u_idx+1],
-                                stride, self.ps_shakedrop[self.u_idx]))
+            layers.append(
+                block(
+                    self.in_chs[self.u_idx],
+                    self.in_chs[self.u_idx + 1],
+                    stride,
+                    self.ps_shakedrop[self.u_idx],
+                )
+            )
             self.u_idx, stride = self.u_idx + 1, 1
         return nn.Sequential(*layers)

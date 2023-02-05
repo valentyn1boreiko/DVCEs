@@ -28,11 +28,17 @@ class ConditionalInstanceNorm2dPlus(nn.Module):
         super().__init__()
         self.num_features = num_features
         self.bias = bias
-        self.instance_norm = nn.InstanceNorm2d(num_features, affine=False, track_running_stats=False)
+        self.instance_norm = nn.InstanceNorm2d(
+            num_features, affine=False, track_running_stats=False
+        )
         if bias:
             self.embed = nn.Embedding(num_classes, num_features * 3)
-            self.embed.weight.data[:, :2 * num_features].normal_(1, 0.02)  # Initialise scale at N(1, 0.02)
-            self.embed.weight.data[:, 2 * num_features:].zero_()  # Initialise bias at 0
+            self.embed.weight.data[:, : 2 * num_features].normal_(
+                1, 0.02
+            )  # Initialise scale at N(1, 0.02)
+            self.embed.weight.data[
+                :, 2 * num_features :
+            ].zero_()  # Initialise bias at 0
         else:
             self.embed = nn.Embedding(num_classes, 2 * num_features)
             self.embed.weight.data.normal_(1, 0.02)
@@ -47,7 +53,9 @@ class ConditionalInstanceNorm2dPlus(nn.Module):
         if self.bias:
             gamma, alpha, beta = self.embed(y).chunk(3, dim=-1)
             h = h + means[..., None, None] * alpha[..., None, None]
-            out = gamma.view(-1, self.num_features, 1, 1) * h + beta.view(-1, self.num_features, 1, 1)
+            out = gamma.view(-1, self.num_features, 1, 1) * h + beta.view(
+                -1, self.num_features, 1, 1
+            )
         else:
             gamma, alpha = self.embed(y).chunk(2, dim=-1)
             h = h + means[..., None, None] * alpha[..., None, None]
@@ -71,15 +79,20 @@ class ConditionalActNorm(nn.Module):
         else:
             m, v = torch.mean(x, dim=(0, 2, 3)), torch.var(x, dim=(0, 2, 3))
             std = torch.sqrt(v + 1e-5)
-            scale_init = 1. / std
-            bias_init = -1. * m / std
-            self.embed.weight.data[:, :self.num_features] = scale_init[None].repeat(self.num_classes, 1)
-            self.embed.weight.data[:, self.num_features:] = bias_init[None].repeat(self.num_classes, 1)
+            scale_init = 1.0 / std
+            bias_init = -1.0 * m / std
+            self.embed.weight.data[:, : self.num_features] = scale_init[None].repeat(
+                self.num_classes, 1
+            )
+            self.embed.weight.data[:, self.num_features :] = bias_init[None].repeat(
+                self.num_classes, 1
+            )
             self.init = True
             return self(x, y)
 
 
-logabs = lambda x: torch.log(torch.abs(x))
+def logabs(x):
+    return torch.log(torch.abs(x))
 
 
 class ActNorm(nn.Module):
@@ -89,7 +102,7 @@ class ActNorm(nn.Module):
         self.loc = nn.Parameter(torch.zeros(1, in_channel, 1, 1))
         self.scale = nn.Parameter(torch.ones(1, in_channel, 1, 1))
 
-        self.register_buffer('initialized', torch.tensor(0, dtype=torch.uint8))
+        self.register_buffer("initialized", torch.tensor(0, dtype=torch.uint8))
         self.logdet = logdet
 
     def initialize(self, input):
@@ -139,28 +152,31 @@ class ContinuousConditionalActNorm(nn.Module):
         super().__init__()
         del num_classes
         self.num_features = num_features
-        self.embed = nn.Sequential(nn.Linear(1, 256),
-                                   nn.ELU(inplace=True),
-                                   nn.Linear(256, 256),
-                                   nn.ELU(inplace=True),
-                                   nn.Linear(256, self.num_features*2),
-                                   )
-        
+        self.embed = nn.Sequential(
+            nn.Linear(1, 256),
+            nn.ELU(inplace=True),
+            nn.Linear(256, 256),
+            nn.ELU(inplace=True),
+            nn.Linear(256, self.num_features * 2),
+        )
+
     def forward(self, x, y):
         scale, bias = self.embed(y.unsqueeze(-1)).chunk(2, dim=-1)
         return x * scale[:, :, None, None] + bias[:, :, None, None]
 
 
-
 def conv3x3(in_planes, out_planes, stride=1):
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=True)
+    return nn.Conv2d(
+        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=True
+    )
+
 
 def conv_init(m):
     classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
+    if classname.find("Conv") != -1:
         init.xavier_uniform(m.weight, gain=np.sqrt(2))
         init.constant(m.bias, 0)
-    elif classname.find('BatchNorm') != -1:
+    elif classname.find("BatchNorm") != -1:
         init.constant(m.weight, 1)
         init.constant(m.bias, 0)
 
@@ -168,19 +184,22 @@ def conv_init(m):
 class Identity(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
+
     def forward(self, x):
         return x
 
 
 class wide_basic(nn.Module):
-    def __init__(self, in_planes, planes, dropout_rate, stride=1, norm=None, leak=.2):
+    def __init__(self, in_planes, planes, dropout_rate, stride=1, norm=None, leak=0.2):
         super(wide_basic, self).__init__()
         self.lrelu = nn.LeakyReLU(leak)
         self.bn1 = get_norm(in_planes, norm)
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, padding=1, bias=True)
         self.dropout = Identity() if dropout_rate == 0.0 else nn.Dropout(p=dropout_rate)
         self.bn2 = get_norm(planes, norm)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=True)
+        self.conv2 = nn.Conv2d(
+            planes, planes, kernel_size=3, stride=stride, padding=1, bias=True
+        )
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != planes:
@@ -210,8 +229,17 @@ def get_norm(n_filters, norm):
 
 
 class Wide_ResNet(nn.Module):
-    def __init__(self, depth, widen_factor, num_classes=10, input_channels=3,
-                 sum_pool=False, norm=None, leak=.2, dropout_rate=0.0):
+    def __init__(
+        self,
+        depth,
+        widen_factor,
+        num_classes=10,
+        input_channels=3,
+        sum_pool=False,
+        norm=None,
+        leak=0.2,
+        dropout_rate=0.0,
+    ):
         super(Wide_ResNet, self).__init__()
         self.leak = leak
         self.in_planes = 16
@@ -219,27 +247,35 @@ class Wide_ResNet(nn.Module):
         self.norm = norm
         self.lrelu = nn.LeakyReLU(leak)
 
-        assert ((depth-4)%6 ==0), 'Wide-resnet depth should be 6n+4'
-        n = (depth-4)//6
+        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4"
+        n = (depth - 4) // 6
         k = widen_factor
 
-        print('| Wide-Resnet %dx%d' %(depth, k))
-        nStages = [16, 16*k, 32*k, 64*k]
+        print("| Wide-Resnet %dx%d" % (depth, k))
+        nStages = [16, 16 * k, 32 * k, 64 * k]
 
         self.conv1 = conv3x3(input_channels, nStages[0])
-        self.layer1 = self._wide_layer(wide_basic, nStages[1], n, dropout_rate, stride=1)
-        self.layer2 = self._wide_layer(wide_basic, nStages[2], n, dropout_rate, stride=2)
-        self.layer3 = self._wide_layer(wide_basic, nStages[3], n, dropout_rate, stride=2)
+        self.layer1 = self._wide_layer(
+            wide_basic, nStages[1], n, dropout_rate, stride=1
+        )
+        self.layer2 = self._wide_layer(
+            wide_basic, nStages[2], n, dropout_rate, stride=2
+        )
+        self.layer3 = self._wide_layer(
+            wide_basic, nStages[3], n, dropout_rate, stride=2
+        )
         self.bn1 = get_norm(nStages[3], self.norm)
         self.last_dim = nStages[3]
         self.linear = nn.Linear(nStages[3], num_classes)
 
     def _wide_layer(self, block, planes, num_blocks, dropout_rate, stride):
-        strides = [stride] + [1]*(num_blocks-1)
+        strides = [stride] + [1] * (num_blocks - 1)
         layers = []
 
         for stride in strides:
-            layers.append(block(self.in_planes, planes, dropout_rate, stride, norm=self.norm))
+            layers.append(
+                block(self.in_planes, planes, dropout_rate, stride, norm=self.norm)
+            )
             self.in_planes = planes
 
         return nn.Sequential(*layers)
@@ -257,23 +293,23 @@ class Wide_ResNet(nn.Module):
         out = out.view(out.size(0), -1)
         return out
 
-    
+
 class EBM_wrapper(nn.Module):
     def __init__(self, model):
         super(EBM_wrapper, self).__init__()
         self.sigma = 3e-2
         self.model = model
-        
+
     def forward(self, x):
-        x = 2*x-1 + self.sigma*torch.randn_like(x)
+        x = 2 * x - 1 + self.sigma * torch.randn_like(x)
         return self.model.classify(x)
-    
+
     def energy(self, x, y=None):
-        x = 2*x-1 + self.sigma*torch.randn_like(x)
+        x = 2 * x - 1 + self.sigma * torch.randn_like(x)
         penult_z = self.model.f(x)
         return self.model.energy_output(penult_z).squeeze()
-    
-    
+
+
 class EBM(nn.Module):
     def __init__(self, depth=28, width=2, norm=None):
         super(EBM, self).__init__()
@@ -300,8 +336,8 @@ class CCF(EBM):
             return logits.logsumexp(1)
         else:
             return torch.gather(logits, 1, y[:, None])
-    
-    
+
+
 class gradient_attack_wrapper(nn.Module):
     def __init__(self, model):
         super(gradient_attack_wrapper, self).__init__()
@@ -316,26 +352,28 @@ class gradient_attack_wrapper(nn.Module):
 
     def eval(self):
         return self.model.eval()
-        
-        
+
+
 class DummyModel(nn.Module):
     def __init__(self, f, n_steps_refine=0):
         super(DummyModel, self).__init__()
         self.f = f
-        self.sgld_lr = 1.
+        self.sgld_lr = 1.0
         self.sgld_std = 1e-2
         self.n_dup_chains = 5
         self.n_steps_refine = n_steps_refine
         self.sigma = 3e-2
-        self.detach=True
-        
+        self.detach = True
+
     def logits(self, x):
         return self.f.classify(x)
 
     def refined_logits(self, x, n_steps=None):
         n_steps = self.n_steps_refine if n_steps is None else n_steps
         xs = x.size()
-        dup_x = x.view(xs[0], 1, xs[1], xs[2], xs[3]).repeat(1, self.n_dup_chains, 1, 1, 1)
+        dup_x = x.view(xs[0], 1, xs[1], xs[2], xs[3]).repeat(
+            1, self.n_dup_chains, 1, 1, 1
+        )
         dup_x = dup_x.view(xs[0] * self.n_dup_chains, xs[1], xs[2], xs[3])
         dup_x = dup_x + torch.randn_like(dup_x) * self.sigma
         refined = self.refine(dup_x, n_steps=n_steps, detach=self.detach)
@@ -360,7 +398,9 @@ class DummyModel(nn.Module):
             x_k = torch.autograd.Variable(x, requires_grad=True) if detach else x
             # sgld
             for k in range(n_steps):
-                f_prime = torch.autograd.grad(self.f(x_k).sum(), [x_k], retain_graph=True)[0]
+                f_prime = torch.autograd.grad(
+                    self.f(x_k).sum(), [x_k], retain_graph=True
+                )[0]
                 x_k.data += f_prime + self.sgld_std * torch.randn_like(x_k)
         final_samples = x_k.detach() if detach else x_k
         return final_samples
@@ -368,7 +408,9 @@ class DummyModel(nn.Module):
     def grad_norm(self, x):
         x_k = torch.autograd.Variable(x, requires_grad=True)
         with torch.enable_grad():
-            f_prime = torch.autograd.grad(self.f(x_k).sum(), [x_k], retain_graph=True)[0]
+            f_prime = torch.autograd.grad(self.f(x_k).sum(), [x_k], retain_graph=True)[
+                0
+            ]
         grad = f_prime.view(x.size(0), -1)
         return grad.norm(p=2, dim=1)
 
@@ -384,4 +426,3 @@ class DummyModel(nn.Module):
 
     def logp_grad_score(self, x):
         return -self.grad_norm(x)
-    

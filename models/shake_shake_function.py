@@ -6,6 +6,7 @@ Based on code from https://github.com/hysts/pytorch_shake_shake
 import torch
 from torch.autograd import Function
 
+
 class ShakeFunction(Function):
     @staticmethod
     def forward(ctx, x1, x2, alpha, beta):
