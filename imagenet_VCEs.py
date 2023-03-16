@@ -205,6 +205,12 @@ for method in [hps.method]:
         norm = 'L1.5'
         stepsize = None
         steps = 75
+    elif method.lower() == 'apgd':
+        radii = np.array([12.])
+        attack_type = 'apgd'
+        norm = 'L2' 
+        stepsize = None
+        steps = 75
     elif method.lower() == 'dvces':
         attack_type = 'diffusion'
         radii = np.array([0.])
@@ -242,11 +248,11 @@ for method in [hps.method]:
         n_batches = int(np.ceil(num_imgs / model_bs))
 
 
-        if use_diffusion or attack_config['pgd'] == 'afw':
+        if use_diffusion or attack_config['pgd'] in ['afw', 'apgd']:
             if use_diffusion:
                 att = DiffusionAttack(hps)
             else:
-                loss = 'log_conf'
+                loss = 'log_conf' if attack_config['pgd'] == 'afw' else 'ce-targeted-cfts'
                 print('using loss', loss)
                 model = None
                 att = get_adversarial_attack(attack_config, model, loss, num_classes,
@@ -289,7 +295,7 @@ for method in [hps.method]:
                                                             batch_targets, dir)[
                         0].detach()
                 else:
-                    if attack_config['pgd'] == 'afw':
+                    if attack_config['pgd'] in ['afw']:
 
                         batch_adv_samples_i = att.perturb(batch_data,
                                                                 batch_targets,

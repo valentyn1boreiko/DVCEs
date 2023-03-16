@@ -6,6 +6,9 @@ from utils_svces.adversarial_attacks import PGD, MonotonePGD, APGDAttack, Argmin
 from utils_svces.distances import LPDistance
 from torch.nn.modules.batchnorm import _BatchNorm
 from utils_svces.get_config import get_config
+from functools import partial
+from blended_diffusion.utils_blended.model_normalization import ResizeWrapper, ResizeAndMeanWrapper
+
 #########
 
 def interleave_forward(model, batches, in_parallel=True):
@@ -87,6 +90,21 @@ def get_epoch_specific_config(stages_end, stages_values, epoch):
     return value
 
 def get_adversarial_attack(config, model, att_criterion, num_classes, epoch=0, args=None, Evaluator=None):
+    classifier_config = get_config(args)
+    evaluator = Evaluator(args, classifier_config, {}, None)
+
+    mean = torch.tensor([0.485, 0.456, 0.406]) if args.classifier_type in [36, 37, 38] else torch.tensor([0.0, 0.0, 0.0])
+    std = torch.tensor([0.229, 0.224, 0.225]) if args.classifier_type in [36, 37, 38] else torch.tensor([1.0, 1.0, 1.0])
+    model = evaluator.load_model(
+        args.classifier_type, prewrapper=partial(ResizeAndMeanWrapper, size=args.classifier_size_1,
+                                                      interpolation=args.interpolation_int_1,
+                                                 mean=mean,
+                                                 std=std)
+    )
+    print('temp o resize o mean wrapper on, default mean, std are', mean, std)
+    model.to(args.device)
+    model.eval()
+
     if isinstance(config['steps'], tuple):
         stages_end, stages_values = config['steps']
         steps = get_epoch_specific_config(stages_end, stages_values, epoch)
@@ -130,6 +148,8 @@ def get_adversarial_attack(config, model, att_criterion, num_classes, epoch=0, a
                                model= model, init_noise_generator=noise_generator)
     elif config['pgd'] == 'apgd':
         adv_attack = APGDAttack(model, eps=eps, n_iter=steps, norm=config['norm'], loss=att_criterion)
+        adv_attack.args = args
+        adv_attack.classifier = model
     elif config['pgd'] == 'cutoutpgd':
         adv_attack = CutoutPGD(eps, steps,
                                config['stepsize'], num_classes,
