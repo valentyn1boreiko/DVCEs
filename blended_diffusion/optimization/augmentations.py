@@ -9,15 +9,15 @@ class ImageAugmentations(nn.Module):
         self.output_size = output_size
         self.augmentations_number = augmentations_number
 
-        #self.augmentations = lambda variance: K.RandomGaussianNoise(mean=0, std=variance, p=1)
         self.augmentations = nn.Sequential(
             K.RandomAffine(degrees=15, translate=0.1, p=p, padding_mode="border"),  # type: ignore
             K.RandomPerspective(0.7, p=p),
         )
+        
 
         self.avg_pool = nn.AdaptiveAvgPool2d((self.output_size, self.output_size))
 
-    def forward(self, input): #, variance):
+    def forward(self, input):
         """Extents the input batch with augmentations
 
         If the input is consists of images [I1, I2] the extended augmented output
@@ -29,20 +29,20 @@ class ImageAugmentations(nn.Module):
         Returns:
             updated batch: of shape [batch * augmentations_number, C, H, W]
         """
-        """
-        # We want to multiply the number of images in the batch in contrast to regular augmantations
-        # that do not change the number of samples in the batch)
-        resized_images = self.avg_pool(input)
-        print('resized to', resized_images.shape)
-        resized_images = torch.tile(resized_images, dims=(self.augmentations_number, 1, 1, 1))
 
-        batch_size = input.shape[0]
-        # We want at least one non augmented image
-        non_augmented_batch = resized_images[:batch_size]
-        augmented_batch = self.augmentations(resized_images[batch_size:])
-        #augmented_batch = self.augmentations(variance)(resized_images[batch_size:])
-        updated_batch = torch.cat([non_augmented_batch, augmented_batch], dim=0)
+        # We want to multiply the number of images in the batch in contrast to regular augmentations
+        # that do not change the number of samples in the batch)
+        if self.augmentations_number <= 1:
+            return input
+        else:
+            resized_images = self.avg_pool(input)
+            resized_images = torch.tile(resized_images, dims=(self.augmentations_number, 1, 1, 1))
+
+            batch_size = input.shape[0]
+            # We want at least one non augmented image
+            non_augmented_batch = resized_images[:batch_size]
         
-        return updated_batch
-        """
-        return input
+            augmented_batch = self.augmentations(resized_images[batch_size:])
+            updated_batch = torch.cat([non_augmented_batch, augmented_batch], dim=0)
+
+            return updated_batch
