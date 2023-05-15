@@ -64,6 +64,6 @@ For any of the proposed parameter settings, feel free to adjust the values, but 
 * Generating blended diffusion based VCEs via
   `python imagenet_VCEs.py --data_folder $data_folder --num_imgs 12 --config 'blended.yml' --use_blended --background_preservation_loss > logs/log` 
 
-The batchsize argument `--bs` is the number of samples per gpu, so if you encounter out-of-memory errors you can reduce it without altering results.
+The batchsize argument `--batch_size` is the number of samples per gpu, so if you encounter out-of-memory errors you can reduce it without altering results.
 
 The resulting images can be found in `ImageNetVCEs/examples/`.
