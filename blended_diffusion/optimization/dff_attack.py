@@ -118,12 +118,14 @@ def _renormalize_gradient(grad, eps, small_const=1e-22):
     grad *= eps.view(grad.shape[0], -1).norm(p=2, dim=1).view(grad.shape[0], 1, 1, 1)
     return grad, grad_norm
 
-def compute_lp_dist(diff, p):
-    diff_abs_flat = diff.abs().view(diff.shape[0], -1)
-    if p == 1.0:
-        lp_dist = torch.sum(diff_abs_flat, dim=1)
+def compute_lp_dist(x, y, p):
+
+    if int(p) == 1:
+        lp_dist = torch.nn.functional.l1_loss(x, y)
+    elif int(p) == 2:
+        lp_dist = torch.nn.functional.mse_loss(x, y)
     else:
-        lp_dist = torch.sum(diff_abs_flat**p, dim=1)
+        lp_dist = torch.mean(abs(x - y)**p)
     return lp_dist
 
 def compute_lp_gradient(diff, p, small_const=1e-12):
