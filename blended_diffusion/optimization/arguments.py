@@ -108,12 +108,26 @@ def get_arguments(parser=None) -> argparse.Namespace:
         "--lp_custom_value", type=float, help="The value of the custom lp norm", default=-1,
     )
 
+    parser.add_argument(
+        "--layer_reg", type=float, help="The custom layers regularization", default=0,
+    )
+
+    parser.add_argument(
+        "--layer_reg_value", type=float, help="The custom layers regularization", default=0,
+    )
 
     parser.add_argument(
         "--background_preservation_loss",
         help="Indicator for using the background preservation loss",
         action="store_true",
     )
+
+    parser.add_argument(
+        "--not_use_init_image",
+        help="Indicator for starting from noise",
+        action="store_true",
+    )
+
 
     parser.add_argument(
         "--enforce_same_norms",
@@ -218,6 +232,32 @@ def get_arguments(parser=None) -> argparse.Namespace:
         "--config", type=str, help='Config to use (default/blended/svce)', default='default.yml'
     )
 
+    # Spurious features
+
+    parser.add_argument(
+        "--class_id_spurious",
+        type=int,
+        help="Id of the spurious class to generate.",
+        default=-1,
+    )
+
+    parser.add_argument(
+        "--component_idx_spurious",
+        type=int,
+        help="Id of the spurious component to generate.",
+        default=-1,
+    )
+
+    parser.add_argument(
+        "--start_img_id",
+        type=int,
+        help="Id of the starting init image.",
+        default=-1,
+    )
+
+    parser.add_argument(
+        "--pca_component_lambda", type=float, help="The coefficient used for the pca_component", default=0,
+    )
 
     defaults = dict(
         classifier_size_1=224,
@@ -255,6 +295,7 @@ def get_arguments(parser=None) -> argparse.Namespace:
         plot_freq=5,
         world_size=1,
         world_id=0,
+        variance=1.0
     )
 
     add_dict_to_argparser(parser, defaults)
