@@ -147,7 +147,7 @@ def _plot_counterfactuals(dir, original_imgs, orig_labels, segmentations, target
             ax[i+1].set_title(title)
 
 
-            save_image(perturbed_imgs[img_idx, target_idx, radius_idx].clip(0, 1), os.path.join(dir, 'single_images', f'{img_idx}.png'))
+            save_image(perturbed_imgs[img_idx+i, target_idx, radius_idx].clip(0, 1), os.path.join(dir, 'single_images', f'{img_idx}_{class_labels[img_target]}.png'))
 
         plt.tight_layout()
         if filenames is not None:
