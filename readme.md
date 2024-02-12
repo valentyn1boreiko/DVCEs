@@ -67,3 +67,15 @@ For any of the proposed parameter settings, feel free to adjust the values, but 
 The batchsize argument `--batch_size` is the number of samples per gpu, so if you encounter out-of-memory errors you can reduce it without altering results.
 
 The resulting images can be found in `ImageNetVCEs/examples/`.
+
+## Citation
+
+If you find this useful in your research, please consider citing:
+
+```bibtex
+@inproceedings{Augustin2022Diffusion,
+      title={Diffusion Visual Counterfactual Explanations},
+      author={Maximilian Augustin and Valentyn Boreiko and  Francesco Croce  and Matthias Hein},
+      booktitle={NeurIPS},
+      year={2022}
+}
